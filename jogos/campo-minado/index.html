@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0b0c">
+<title>Campo Minado — iGames</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0c;--panel:rgba(255,255,255,.04);--line:rgba(255,255,255,.09);--or:#ff7a1a;--am:#ffb347;--tx:#fff;--mu:rgba(255,255,255,.55);--cs:30px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:Sora,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#glow{position:fixed;inset:0;background:radial-gradient(circle at 50% 45%,rgba(255,122,26,.4),transparent 62%);opacity:.18;pointer-events:none}
+#app{position:relative;height:100%;height:100dvh;display:flex;flex-direction:column;gap:8px;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+#bar{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;justify-content:center;gap:5px;height:38px;min-width:40px;padding:0 10px;border-radius:999px;background-color:var(--panel);border:1px solid var(--line);color:var(--tx);font:600 14px Sora,system-ui,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+button.pill,select.pill{cursor:pointer}
+button.pill{min-width:36px;padding:0}
+button.pill:hover,select.pill:hover{border-color:rgba(255,122,26,.6)}
+#face{font-size:20px;padding:0}
+#modo.on{background-color:rgba(255,122,26,.22);border-color:var(--or)}
+select.pill{appearance:none;-webkit-appearance:none;color-scheme:dark;padding:0 26px 0 12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:11px}
+#wrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#board{display:grid;gap:2px;padding:6px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 20px 80px rgba(255,122,26,.12);touch-action:none}
+.c{width:var(--cs);height:var(--cs);margin:0;padding:0;border:0;border-radius:calc(var(--cs)*.2);display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#27272b,#1a1a1d);box-shadow:inset 0 1px 0 rgba(255,255,255,.07);color:#fff;font:700 calc(var(--cs)*.55)/1 Sora,system-ui,sans-serif;cursor:pointer}
+@media (hover:hover){.c:not(.o):hover{box-shadow:inset 0 0 0 1px rgba(255,122,26,.6)}}
+.c.o{background:#101012;box-shadow:none;cursor:default;animation:pop .18s ease-out}
+.c.f{font-size:calc(var(--cs)*.5)}
+body.cur .c:focus{outline:3px solid var(--am);outline-offset:-2px;z-index:1}
+.c.errada{background:#3b1717}
+.c.boom{background:#6a2412;box-shadow:inset 0 0 0 2px var(--or)}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#board.tremer{animation:tremer .6s}
+@keyframes tremer{10%{transform:translate(-8px,4px)}20%{transform:translate(7px,-5px)}30%{transform:translate(-6px,-3px)}40%{transform:translate(5px,4px)}55%{transform:translate(-3px,2px)}70%{transform:translate(2px,-2px)}100%{transform:none}}
+@keyframes pop{from{transform:scale(.8)}to{transform:scale(1)}}
+.n1{color:#5aa9ff}.n2{color:#4fd18b}.n3{color:#ff6b6b}.n4{color:#b28cff}.n5{color:#ffa45c}.n6{color:#43d3d3}.n7{color:#e6e6e6}.n8{color:#9a9a9a}
+#ov{position:absolute;inset:0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:12px;overflow:auto;background:rgba(11,11,12,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity .3s,visibility 0s}
+#ov.off{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s,visibility 0s .3s}
+#ov h1{margin:0;font-size:clamp(24px,7vmin,40px);font-weight:700}
+#ov p{margin:0;color:var(--mu);font-size:14px;line-height:1.5;max-width:300px}
+#ov div{display:flex;gap:10px;margin-top:6px}
+#ov #niveis{gap:6px;flex-wrap:wrap;justify-content:center;margin-top:2px}
+#ov #niveis button{height:32px;padding:0 12px;font-size:13px;background:var(--panel);color:var(--tx);border:1px solid var(--line);box-shadow:none}
+#ov #niveis button.on{background:rgba(255,122,26,.22);border-color:var(--or)}
+#ov button{border:0;border-radius:999px;padding:12px 28px;font:600 15px Sora,system-ui,sans-serif;color:#1a0b00;background:linear-gradient(180deg,var(--am),var(--or));box-shadow:0 10px 30px rgba(255,122,26,.4);cursor:pointer}
+#ov button.ghost{background:var(--panel);color:var(--tx);border:1px solid var(--line);box-shadow:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== Acabamento visual ===== */
+:root{--a:#2b2b31;--b:#1a1a1e;--o:#0e0e10;--glass:rgba(22,22,26,.66)}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(45% 40% at 20% 15%,rgba(255,122,26,.2),transparent 70%),radial-gradient(45% 45% at 82% 90%,rgba(255,179,71,.12),transparent 70%);pointer-events:none}
+.pill{background-color:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.07);transition:transform .15s,border-color .15s}
+button.pill:active{transform:scale(.94)}
+.pill i{display:flex;width:16px;height:16px}.pill svg{width:100%;height:100%}
+#modo svg{width:18px;height:18px}
+#minas,#tempo{color:var(--am);font-weight:700;letter-spacing:.08em;text-shadow:0 0 10px rgba(255,122,26,.65)}
+#face{background-image:radial-gradient(circle at 35% 30%,#3b3b43,#1a1a1e);border-color:rgba(255,122,26,.4);box-shadow:0 0 20px rgba(255,122,26,.2),inset 0 1px 0 rgba(255,255,255,.12)}
+#face:hover{transform:scale(1.08)}
+#board{gap:2px;padding:8px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border-color:rgba(255,255,255,.11);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 70px rgba(255,122,26,.15),inset 0 1px 0 rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#board.vitoria{animation:brilho 1.2s ease-in-out 2 alternate forwards}
+@keyframes brilho{to{box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 110px rgba(255,194,58,.5),inset 0 1px 0 rgba(255,255,255,.09)}}
+.c{position:relative;font-weight:800;background:linear-gradient(160deg,var(--a),var(--b));border-radius:calc(var(--cs)*.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 -2px 0 rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.35);transition:transform .12s,box-shadow .15s}
+.c.p{--a:#34343c;--b:#212127}
+@media (hover:hover){.c:not(.o):hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.4),0 0 0 1px rgba(255,122,26,.75),0 6px 16px rgba(255,122,26,.28)}}
+.c:not(.o):active{transform:scale(.92)}
+.c.o{background:radial-gradient(circle at 50% 30%,#18181c,var(--o));box-shadow:inset 0 2px 6px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.035);animation:abre .3s cubic-bezier(.2,.8,.3,1)}
+.c.o.p{--o:#131316}
+@keyframes abre{0%{transform:scale(.55);filter:brightness(2.2);opacity:.4}60%{transform:scale(1.07)}100%{transform:none;filter:none;opacity:1}}
+.c svg{width:64%;height:64%;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.c.f svg{animation:planta .32s cubic-bezier(.3,1.6,.5,1)}
+@keyframes planta{from{transform:translateY(-70%) scale(.4);opacity:0}}
+.n1{color:#6cb6ff;text-shadow:0 0 10px #6cb6ff88}.n2{color:#4fd18b;text-shadow:0 0 10px #4fd18b88}.n3{color:#ff6b6b;text-shadow:0 0 10px #ff6b6b88}.n4{color:#b28cff;text-shadow:0 0 10px #b28cff88}
+.n5{color:#ffa45c;text-shadow:0 0 10px #ffa45c88}.n6{color:#43d3d3;text-shadow:0 0 10px #43d3d388}.n7{color:#ececec;text-shadow:0 0 10px #ececec66}.n8{color:#9a9a9a}
+.c.boom{z-index:1;background:radial-gradient(circle,#ffe29a,#ff7a1a 55%,#7a2208);box-shadow:0 0 26px rgba(255,122,26,.9);animation:pulso .5s ease-in-out infinite alternate}
+@keyframes pulso{to{transform:scale(1.12)}}
+.c.boom svg{filter:none}
+.c.errada{background:#3a1616}.c.errada svg{opacity:.45}
+.c.errada::after{content:"✕";position:absolute;color:#ff5a4a;font-size:calc(var(--cs)*.62);text-shadow:0 0 8px rgba(255,90,74,.7)}
+#ov{background:radial-gradient(circle at 50% 45%,rgba(255,122,26,.12),rgba(8,8,9,.74));-webkit-backdrop-filter:blur(10px)}
+#ov .card{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0;padding:20px 24px;max-width:min(92%,380px);border-radius:22px;background:var(--glass);border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)}
+#ov:not(.off) .card{animation:cartao .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes cartao{from{opacity:0;transform:translateY(14px) scale(.92)}}
+#ov h1{letter-spacing:-.01em}
+#ov[data-t=win] h1{color:#ffc23a;text-shadow:0 0 28px rgba(255,194,58,.55)}
+#ov[data-t=lose] h1{color:#ff6a3a;text-shadow:0 0 28px rgba(255,90,40,.55)}
+#ov button{transition:transform .15s,filter .15s}
+#ov button:hover{transform:translateY(-1px);filter:brightness(1.1)}
+#ov button:active{transform:scale(.96)}
+#ov #niveis button.on{box-shadow:0 0 14px rgba(255,122,26,.35)}
+</style>
+</head>
+<body>
+<div id="glow"></div>
+<div id="app">
+  <div id="bar">
+    <div class="pill" title="Minas restantes"><i id="icM"></i><span id="minas">000</span></div>
+    <button class="pill" id="face" type="button" aria-label="Novo jogo">🙂</button>
+    <div class="pill" title="Tempo"><i id="icT"></i><span id="tempo">000</span></div>
+    <select class="pill" id="nivel" aria-label="Dificuldade">
+      <option value="facil">Fácil</option><option value="medio">Médio</option><option value="dificil">Difícil</option><option value="expert">Expert</option>
+    </select>
+    <button class="pill" id="modo" type="button" aria-pressed="false" aria-label="Modo bandeira" title="Modo bandeira">🚩</button>
+    <button class="pill" id="som" type="button" aria-label="Som" title="Som">🔊</button>
+  </div>
+  <div id="wrap">
+    <div id="board" role="group" aria-label="Tabuleiro"></div>
+    <canvas id="fx"></canvas>
+    <div id="ov" class="off" role="dialog" aria-live="polite">
+      <div class="card">
+      <h1 id="ovT"></h1><p id="ovP"></p>
+      <div id="niveis"><button type="button" data-n="facil">Fácil</button><button type="button" data-n="medio">Médio</button><button type="button" data-n="dificil">Difícil</button><button type="button" data-n="expert">Expert</button></div>
+      <div><button id="again" type="button"></button><button id="see" class="ghost" type="button">Ver tabuleiro</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+const NIVEIS = { facil: { c: 10, r: 8, m: 10 }, medio: { c: 14, r: 10, m: 25 }, dificil: { c: 18, r: 12, m: 45 }, expert: { c: 22, r: 13, m: 60 } };
+const $ = (id) => document.getElementById(id);
+const ICO = {
+  flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v17" stroke="#d6d6dc" stroke-width="2" stroke-linecap="round"/><path d="M7.5 4 19 8.5 7.5 13z" fill="#ff7a1a"/><path d="M7.5 4 19 8.5 7.5 8.8z" fill="#ffb347"/><ellipse cx="7" cy="20.5" rx="5" ry="1.3" fill="#000" opacity=".35"/></svg>',
+  mina: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19M2.5 12h19M5.3 5.3l13.4 13.4M18.7 5.3 5.3 18.7" stroke="#d9d9df" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="6.6" fill="#1c1c20" stroke="#e6e6ec" stroke-width="1.4"/><circle cx="9.8" cy="9.8" r="2" fill="#fff" opacity=".85"/></svg>',
+  relogio: '<svg viewBox="0 0 24 24" fill="none" stroke="#ffb347" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.8 1.8M9.5 2.5h5"/></svg>'
+};
+const z3 = (n) => (n < 0 ? '-' : '') + String(Math.abs(n)).padStart(n < 0 ? 2 : 3, '0');
+const pa = (i) => (((i % S.cols) + ((i / S.cols) | 0)) & 1 ? ' p' : '');   // xadrez sutil
+const boardEl = $('board'), wrapEl = $('wrap'), ov = $('ov');
+let S, NB, cells = [], timer = 0, flagMode = false, tipo = 'mouse', toque = null;
+
+/* ---------- Sons: sintetizados com Web Audio, sem arquivos ---------- */
+let ac = null, mudo = false;
+try { mudo = localStorage.getItem('igames:campo-minado:mudo') === '1'; } catch (e) {}
+function audio() {
+  if (!ac) { const A = window.AudioContext || window.webkitAudioContext; if (A) ac = new A(); }
+  if (ac && ac.state === 'suspended') ac.resume();
+  return ac;
+}
+function tom(f, dur, tipo = 'sine', vol = .15, f2 = f, atraso = 0) {
+  const a = !mudo && audio(); if (!a) return;
+  const t = a.currentTime + atraso, o = a.createOscillator(), g = a.createGain();
+  o.type = tipo; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur);
+}
+function estouro(vol = 1, dur = 1.1) {   // ruído filtrado + grave que despenca = explosão
+  const a = !mudo && audio(); if (!a) return;
+  const t = a.currentTime, buf = a.createBuffer(1, Math.floor(a.sampleRate * dur), a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const r = a.createBufferSource(), lp = a.createBiquadFilter(), g = a.createGain();
+  r.buffer = buf; lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(3000, t); lp.frequency.exponentialRampToValueAtTime(120, t + dur);
+  g.gain.setValueAtTime(.7 * vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  r.connect(lp).connect(g).connect(a.destination); r.start(t);
+  tom(140, dur * .7, 'sine', .8 * vol, 28);
+}
+
+/* ---------- Explosão: partículas + clarão em canvas, e tremor do tabuleiro ---------- */
+const fx = $('fx'), fc = fx.getContext('2d'), reduz = matchMedia('(prefers-reduced-motion:reduce)').matches;
+let parts = [], ondas = [], fxW = 0, fxH = 0, esc = 1, ult = 0, anim = false;
+function fogo(k, forca) {
+  if (reduz) return;
+  const w = wrapEl.getBoundingClientRect(), c = cells[k].getBoundingClientRect();
+  esc = Math.min(2, window.devicePixelRatio || 1); fxW = w.width; fxH = w.height;
+  if (fx.width !== Math.round(fxW * esc)) { fx.width = Math.round(fxW * esc); fx.height = Math.round(fxH * esc); }
+  const x = c.left + c.width / 2 - w.left, y = c.top + c.height / 2 - w.top, u = Math.max(.6, Math.min(fxW, fxH) / 260);
+  for (let i = 0; i < 40 * forca; i++) {
+    const a = Math.random() * 6.283, v = (40 + Math.random() * 260) * forca * u;
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40, t: 0, max: .5 + Math.random() * .7,
+                 r: (2 + Math.random() * 4) * Math.sqrt(forca) * Math.max(1, u * .7), h: 15 + Math.random() * 40 });
+  }
+  ondas.push({ x, y, t: 0, max: .45, R: 90 * forca * u });
+  if (!anim) { anim = true; ult = performance.now(); requestAnimationFrame(quadro); }
+}
+function quadro(now) {
+  const dt = Math.min(.05, (now - ult) / 1000); ult = now;
+  fc.setTransform(esc, 0, 0, esc, 0, 0); fc.clearRect(0, 0, fxW, fxH); fc.globalCompositeOperation = 'lighter';
+  for (const o of ondas) {   // clarão que se expande
+    o.t += dt; const p = Math.min(1, o.t / o.max), al = 1 - p, R = o.R * (.3 + .7 * p);
+    const g = fc.createRadialGradient(o.x, o.y, 0, o.x, o.y, R);
+    g.addColorStop(0, `rgba(255,240,200,${al})`); g.addColorStop(.4, `rgba(255,140,30,${al * .6})`); g.addColorStop(1, 'rgba(255,80,0,0)');
+    fc.fillStyle = g; fc.beginPath(); fc.arc(o.x, o.y, R, 0, 6.283); fc.fill();
+  }
+  for (const p of parts) {   // faíscas e fogo
+    p.t += dt; p.vy += 420 * dt; p.vx *= 1 - 1.5 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    const al = Math.max(0, 1 - p.t / p.max);
+    fc.fillStyle = `hsla(${p.h * al},100%,55%,${al})`; fc.beginPath(); fc.arc(p.x, p.y, p.r * (.5 + .5 * al), 0, 6.283); fc.fill();
+  }
+  parts = parts.filter((p) => p.t < p.max); ondas = ondas.filter((o) => o.t < o.max);
+  if (parts.length || ondas.length) requestAnimationFrame(quadro); else { anim = false; fc.clearRect(0, 0, fxW, fxH); }
+}
+function tremer() { boardEl.classList.remove('tremer'); void boardEl.offsetWidth; boardEl.classList.add('tremer'); }
+function revelarMina(k, boom) { cells[k].className = 'c o' + (boom ? ' boom' : '') + pa(k); cells[k].innerHTML = ICO.mina; }
+
+/* ---------- Novo jogo e desenho do tabuleiro ---------- */
+function novoJogo() {
+  clearInterval(timer);
+  const n = NIVEIS[$('nivel').value];
+  const retrato = wrapEl.clientHeight > wrapEl.clientWidth * 1.15;   // celular em pé: tabuleiro vertical
+  const cols = retrato ? n.r : n.c, rows = retrato ? n.c : n.r, total = cols * rows;
+  S = { cols, rows, total, minas: n.m, mine: new Uint8Array(total), st: new Uint8Array(total), adj: new Uint8Array(total),
+        flags: 0, abertas: 0, iniciado: false, fim: false, t0: 0 };   // st: 0 fechada, 1 aberta, 2 bandeira
+  NB = Array.from({ length: total }, (_, i) => {
+    const x = i % cols, y = (i / cols) | 0, v = [];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const nx = x + dx, ny = y + dy;
+      if ((dx || dy) && nx >= 0 && nx < cols && ny >= 0 && ny < rows) v.push(ny * cols + nx);
+    }
+    return v;
+  });
+  boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cs))`;
+  boardEl.innerHTML = '';
+  cells = [];
+  for (let i = 0; i < total; i++) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'c'; b.dataset.i = i; b.tabIndex = -1;
+    boardEl.appendChild(b); cells.push(b); pintar(i);
+  }
+  ov.classList.add('off');
+  document.querySelectorAll('#niveis button').forEach((b) => { b.classList.toggle('on', b.dataset.n === $('nivel').value); b.title = NIVEIS[b.dataset.n].m + ' minas'; });
+  boardEl.classList.remove('vitoria', 'tremer');
+  $('face').textContent = '🙂'; $('tempo').textContent = '000';
+  hud(); ajustar();
+  cur = (S.rows >> 1) * S.cols + (S.cols >> 1); foco();
+}
+
+/* Calcula o tamanho da casa para o tabuleiro caber na moldura */
+function ajustar() {
+  if (!S) return;
+  const aw = wrapEl.clientWidth - 18, ah = wrapEl.clientHeight - 18;
+  if (aw <= 0 || ah <= 0) return;
+  const s = Math.min((aw - 2 * (S.cols - 1)) / S.cols, (ah - 2 * (S.rows - 1)) / S.rows);
+  boardEl.style.setProperty('--cs', Math.max(14, Math.min(56, Math.floor(s))) + 'px');
+}
+const hud = () => { $('minas').textContent = z3(S.minas - S.flags); };
+
+function pintar(i) {
+  const el = cells[i], s = S.st[i], a = S.adj[i];
+  const pos = `Linha ${((i / S.cols) | 0) + 1}, coluna ${(i % S.cols) + 1}: `;
+  if (s === 1) {
+    el.className = 'c o' + (a ? ' n' + a : '') + pa(i); el.textContent = a || '';
+    el.setAttribute('aria-label', pos + (a ? a + ' minas ao redor' : 'vazia'));
+  } else {
+    el.className = 'c' + (s === 2 ? ' f' : '') + pa(i); el.innerHTML = s === 2 ? ICO.flag : '';
+    el.setAttribute('aria-label', pos + (s === 2 ? 'com bandeira' : 'fechada'));
+  }
+}
+
+/* ---------- Regras ---------- */
+function colocarMinas(seguro) {   // sorteia depois do 1º toque: a casa e as vizinhas nunca têm mina
+  const proibido = new Set([seguro, ...NB[seguro]]), livres = [];
+  for (let i = 0; i < S.total; i++) if (!proibido.has(i)) livres.push(i);
+  for (let k = 0; k < S.minas; k++) {
+    const j = k + Math.floor(Math.random() * (livres.length - k));
+    [livres[k], livres[j]] = [livres[j], livres[k]];
+    S.mine[livres[k]] = 1;
+  }
+  for (let i = 0; i < S.total; i++) if (!S.mine[i]) S.adj[i] = NB[i].reduce((t, n) => t + S.mine[n], 0);
+}
+
+function expandir(i) {   // abre a casa; se for 0, abre as vizinhas em cascata
+  const pilha = [i], jogo = S, ox = i % S.cols, oy = (i / S.cols) | 0;
+  while (pilha.length) {
+    const k = pilha.pop();
+    if (S.st[k] !== 0) continue;
+    S.st[k] = 1; S.abertas++;
+    const dl = Math.min(450, Math.hypot(k % S.cols - ox, ((k / S.cols) | 0) - oy) * 22);   // onda a partir da casa tocada
+    if (dl < 1) pintar(k); else setTimeout(() => { if (S === jogo) pintar(k); }, dl);
+    if (S.adj[k] === 0) for (const n of NB[k]) if (S.st[n] === 0) pilha.push(n);
+  }
+}
+
+function abrir(i) {
+  if (S.fim || S.st[i] !== 0) return;
+  if (!S.iniciado) { S.iniciado = true; colocarMinas(i); S.t0 = Date.now(); timer = setInterval(tick, 250); }
+  if (S.mine[i]) return perder(i);
+  const antes = S.abertas;
+  expandir(i);
+  tom(440, .07, 'triangle', .1);
+  if (S.abertas - antes > 3) tom(300, .25, 'sine', .07, 900);
+  if (S.abertas === S.total - S.minas) ganhar();
+}
+
+function bandeira(i) {
+  if (S.fim || S.st[i] === 1) return;
+  S.flags += S.st[i] === 0 ? 1 : -1;
+  S.st[i] = S.st[i] === 0 ? 2 : 0;
+  pintar(i); hud();
+  tom(S.st[i] === 2 ? 760 : 520, .06, 'square', .05);
+}
+
+function acorde(i) {   // toque num número com as bandeiras certas: abre as vizinhas
+  if (S.st[i] !== 1 || !S.adj[i] || NB[i].filter((n) => S.st[n] === 2).length !== S.adj[i]) return;
+  let boom = -1;
+  for (const n of NB[i]) if (S.st[n] === 0) { if (S.mine[n]) boom = n; else expandir(n); }
+  if (boom >= 0) perder(boom);
+  else { tom(440, .07, 'triangle', .1); if (S.abertas === S.total - S.minas) ganhar(); }
+}
+
+function tocar(i, longo) {   // toque curto abre, toque longo marca (o modo bandeira inverte)
+  if (S.fim) return;
+  if (S.st[i] === 1) return acorde(i);
+  if (flagMode !== longo) bandeira(i); else abrir(i);
+}
+
+const tick = () => { $('tempo').textContent = z3(segundos()); };
+const segundos = () => Math.min(999, Math.floor((Date.now() - S.t0) / 1000));
+
+function perder(i) {
+  S.fim = true; clearInterval(timer);
+  const jogo = S, cx = i % S.cols, cy = (i / S.cols) | 0, outras = [];
+  S.mine.forEach((m, k) => {
+    if (m && S.st[k] !== 2 && k !== i) outras.push(k);
+    else if (!m && S.st[k] === 2) cells[k].classList.add('errada');
+  });
+  const dist = (k) => Math.hypot(k % S.cols - cx, ((k / S.cols) | 0) - cy);
+  outras.sort((p, q) => dist(p) - dist(q));   // as outras minas explodem em cadeia, da mais perto à mais longe
+  revelarMina(i, true); fogo(i, 1.7); estouro(1, 1.3); tremer(); vibrar();
+  $('face').textContent = '😵';
+  const passo = Math.min(110, 1500 / (outras.length || 1));
+  outras.forEach((k, n) => setTimeout(() => { if (S === jogo) { revelarMina(k); fogo(k, .5); estouro(.25, .5); } }, 350 + n * passo));
+  setTimeout(() => { if (S === jogo) mostrar('Boom!', 'Você pisou numa mina. Tente de novo ou mude a dificuldade.', 'Jogar de novo'); }, 1100 + outras.length * passo);
+}
+
+function ganhar() {
+  S.fim = true; clearInterval(timer);
+  const seg = segundos();
+  $('tempo').textContent = z3(seg);
+  S.mine.forEach((m, k) => { if (m && S.st[k] !== 2) { S.st[k] = 2; pintar(k); } });
+  S.flags = S.minas; hud();
+  $('face').textContent = '😎';
+  [523, 659, 784, 1047].forEach((f, k) => tom(f, .3, 'triangle', .12, f, k * .12));
+  boardEl.classList.add('vitoria');
+  const jg = S;   // fogos de comemoração
+  for (let n = 0; n < 6; n++) setTimeout(() => { if (S === jg) fogo((Math.random() * S.total) | 0, .8); }, n * 170);
+  setTimeout(() => mostrar('Você venceu!', `Tempo: ${seg} s`, 'Jogar de novo'), 600);
+}
+
+function mostrar(titulo, texto, botao, semVer) {
+  $('ovT').textContent = titulo; $('ovP').textContent = texto;
+  ov.dataset.t = { 'Boom!': 'lose', 'Você venceu!': 'win' }[titulo] || 'start';
+  $('again').textContent = botao; $('see').hidden = !!semVer;
+  ov.classList.remove('off'); $('again').focus();
+}
+
+/* ---------- Controles ---------- */
+const casa = (e) => { const el = e.target.closest('.c'); return el ? +el.dataset.i : -1; };
+
+boardEl.addEventListener('pointerdown', (e) => {
+  tipo = e.pointerType; audio(); document.body.classList.remove('cur');
+  const i = casa(e);
+  if (tipo === 'mouse' || i < 0) return;
+  toque = { i, x: e.clientX, y: e.clientY, longo: false };
+  toque.t = setTimeout(() => { toque.longo = true; tocar(i, true); if (navigator.vibrate) navigator.vibrate(15); }, 380);
+});
+boardEl.addEventListener('pointermove', (e) => {
+  if (toque && Math.hypot(e.clientX - toque.x, e.clientY - toque.y) > 12) { clearTimeout(toque.t); toque = null; }
+});
+boardEl.addEventListener('pointerup', () => {
+  if (!toque) return;
+  clearTimeout(toque.t);
+  if (!toque.longo) tocar(toque.i, false);
+  toque = null;
+});
+boardEl.addEventListener('pointercancel', () => { if (toque) clearTimeout(toque.t); toque = null; });
+boardEl.addEventListener('click', (e) => {   // mouse e teclado (o toque já foi tratado acima)
+  if ((e.detail > 0 && tipo !== 'mouse') || (e.detail === 0 && Date.now() - ultTecla < 500)) return;
+  const i = casa(e); if (i >= 0) tocar(i, false);
+});
+boardEl.addEventListener('contextmenu', (e) => {   // botão direito = bandeira
+  e.preventDefault();
+  const i = casa(e); if (i >= 0 && tipo === 'mouse') bandeira(i);
+});
+
+$('som').textContent = mudo ? '🔇' : '🔊';
+$('som').addEventListener('click', () => {
+  mudo = !mudo; $('som').textContent = mudo ? '🔇' : '🔊';
+  try { localStorage.setItem('igames:campo-minado:mudo', mudo ? '1' : '0'); } catch (e) {}
+  tom(660, .08, 'triangle', .1);
+});
+$('face').addEventListener('click', novoJogo);
+$('niveis').addEventListener('click', (e) => {   // escolher o nível na tela já começa o jogo
+  const b = e.target.closest('button');
+  if (b) { $('nivel').value = b.dataset.n; novoJogo(); }
+});
+$('nivel').addEventListener('change', () => { novoJogo(); $('nivel').blur(); });
+$('modo').addEventListener('click', () => {
+  flagMode = !flagMode;
+  $('modo').classList.toggle('on', flagMode); $('modo').setAttribute('aria-pressed', flagMode);
+});
+$('again').addEventListener('click', () => { if (S.fim) novoJogo(); ov.classList.add('off'); foco(); });
+$('see').addEventListener('click', () => { ov.classList.add('off'); foco(); });
+/* ---------- Teclado e controle (gamepad): um cursor que anda pelo tabuleiro ---------- */
+const NIVEIS_ORD = ['facil', 'medio', 'dificil', 'expert'];
+let cur = 0, ultTecla = 0, gpOn = false, gpAnt = [], gpMov = 0, gpRep = false;
+const aberta = () => !ov.classList.contains('off');
+const comCursor = () => document.body.classList.contains('cur');
+function foco() { if (comCursor() && cells[cur]) cells[cur].focus({ preventScroll: true }); }
+function mover(dx, dy) {
+  if (aberta()) return;
+  const ja = comCursor();
+  document.body.classList.add('cur');
+  if (ja) cur = Math.min(S.rows - 1, Math.max(0, ((cur / S.cols) | 0) + dy)) * S.cols + Math.min(S.cols - 1, Math.max(0, cur % S.cols + dx));
+  foco();
+}
+function agir(flag) {   // Enter/Espaço/A abrem (ou abrem as vizinhas); F/X/B marcam bandeira
+  if (aberta()) { if (!flag) $('again').click(); else if (!$('see').hidden) $('see').click(); return; }
+  if (!comCursor()) { document.body.classList.add('cur'); return foco(); }   // 1º toque só mostra o cursor
+  if (flag) bandeira(cur); else if (S.st[cur] === 1) acorde(cur); else abrir(cur);
+}
+function nivel(n) { $('nivel').value = NIVEIS_ORD[(n + 4) % 4]; novoJogo(); }
+const pad = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(Boolean);
+function vibrar() {   // celular vibra e o controle treme na explosão
+  if (navigator.vibrate) navigator.vibrate([90, 40, 180]);
+  try {
+    const p = pad(), r = p && p.vibrationActuator && p.vibrationActuator.playEffect('dual-rumble', { duration: 600, strongMagnitude: 1, weakMagnitude: .8 });
+    if (r && r.catch) r.catch(() => {});
+  } catch (e) {}
+}
+
+const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.tagName === 'SELECT') return;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key, nativo = e.target.closest('#bar, #ov');   // botões e menu usam o teclado nativo
+  if (k === 'r') novoJogo();
+  else if (k === 'm') $('som').click();
+  else if (k.length === 1 && k >= '1' && k <= '4') nivel(+k - 1);
+  else if (DIRS[k]) { e.preventDefault(); mover(...DIRS[k]); }
+  else if ((k === 'Enter' || k === ' ') && !nativo) { e.preventDefault(); ultTecla = Date.now(); agir(false); }
+  else if (k === 'f') agir(true);
+});
+
+function sondar(t) {   // lê o controle a cada quadro: direcional/analógico move, A abre, X/B marca, Y/Start reinicia, LB/RB trocam o nível
+  const p = pad();
+  if (!p) { gpOn = false; return; }
+  const b = (i) => !!(p.buttons[i] && p.buttons[i].pressed), novo = (i) => b(i) && !gpAnt[i];
+  const dx = b(15) || p.axes[0] > .55 ? 1 : b(14) || p.axes[0] < -.55 ? -1 : 0;
+  const dy = b(13) || p.axes[1] > .55 ? 1 : b(12) || p.axes[1] < -.55 ? -1 : 0;
+  if (dx || dy) { if (t >= gpMov) { mover(dx, dy); gpMov = t + (gpRep ? 120 : 350); gpRep = true; } } else { gpRep = false; gpMov = 0; }
+  if (novo(0)) agir(false);
+  if (novo(1) || novo(2)) agir(true);
+  if (novo(3) || novo(9)) novoJogo();
+  if (novo(4)) nivel(NIVEIS_ORD.indexOf($('nivel').value) - 1);
+  if (novo(5)) nivel(NIVEIS_ORD.indexOf($('nivel').value) + 1);
+  gpAnt = p.buttons.map((x) => x.pressed);
+  requestAnimationFrame(sondar);
+}
+addEventListener('gamepadconnected', () => { if (!gpOn) { gpOn = true; requestAnimationFrame(sondar); } });
+if (pad()) { gpOn = true; requestAnimationFrame(sondar); }
+
+if ('ResizeObserver' in window) new ResizeObserver(ajustar).observe(wrapEl); else addEventListener('resize', ajustar);
+
+$('icM').innerHTML = ICO.mina; $('icT').innerHTML = ICO.relogio; $('modo').innerHTML = ICO.flag;
+novoJogo();
+mostrar('Campo Minado',
+  matchMedia('(hover:none)').matches
+    ? 'Toque abre, segure marca 🚩. Escolha a dificuldade:'
+    : 'Clique abre, botão direito marca 🚩. Teclado: setas ou WASD + Enter, F marca. Controle: A abre, X marca. Escolha a dificuldade:',
+  'Jogar', true);
+</script>
+</body>
+</html>

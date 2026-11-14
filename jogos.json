@@ -16,6 +16,15 @@
   "categoria": "Musical",
   "thumb": "assets/thumbs/osu.jpg",
   "caminho": "jogos/osu/index.html"
-}
+},
+  {
+    "id": "campo-minado",
+    "nome": "Campo Minado",
+    "descricao": "O clássico Campo Minado: abra as casas, marque as minas e limpe o tabuleiro no menor tempo.",
+    "autor": "Wei",
+    "categoria": "Puzzle",
+    "thumb": "assets/thumbs/campo-minado.jpg",
+    "caminho": "jogos/campo-minado/index.html"
+  }
 ]
 
